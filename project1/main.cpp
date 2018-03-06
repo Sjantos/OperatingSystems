@@ -43,6 +43,7 @@ public:
 		win->clearOne(m->posY, m->posX);
 		//Set bool in table to true - means that new thread can replace it
 		b = true;
+                delete[] m;
 	}
 };
 
@@ -93,6 +94,8 @@ int main(int argc,  char** argv)
 	}
 	//Delete allocated memory
 	delete[] ThreadTable;
+        delete[] statTable;
+        delete mt;
     delete win;
 
     return 0;
