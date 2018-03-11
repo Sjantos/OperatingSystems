@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include "Mark.h"
 
-MyWindow::MyWindow(int h) : vector(), m(), c()
+MyWindow::MyWindow(int h) : vector(), mtx(), c()
 {
 	//Init ncurses
     initscr();
@@ -27,7 +27,7 @@ MyWindow::~MyWindow()
 void MyWindow::addToBuffer(Mark* m)
 {
 	//Lock for one-thread-at-moment use
-	std::lock_guard<std::mutex> lock(this->m);
+	std::lock_guard<std::mutex> lock(this->mtx);
 	//Set starting position
 	m->posY = startY;
 	m->posX = startX;
@@ -40,32 +40,40 @@ void MyWindow::addToBuffer(Mark* m)
 void MyWindow::clearOne(int y, int x)
 {
 	//Take control
-	m.lock();
+	mtx.lock();
 		//Replace old position with empty space
 		mvwaddch(win, y, x, ' ');
 		wrefresh(win);
-	m.unlock();
+	mtx.unlock();
 }
 
 void MyWindow::update()
 {
 	//Take control
-	m.lock();
+	mtx.lock();
 	//Draw all marks from "register"
 	for (auto &mark : vector)
-	{
 		mvwaddch(win, mark->posY, mark->posX, mark->mark);
-		wrefresh(win);
-	}
+	wrefresh(win);
 	//Draw description under box
 	mvprintw(height+1, 3, "To end, press ESC and wait for all threads to bounce 3 times");
-	refresh();
-	m.unlock();
+	refresh();	
+	
+	mtx.unlock();
+}
+
+bool MyWindow::marksInHalf()
+{
+	//Check if all marks are in upper half of box
+	for(auto &mark : vector)
+		if(mark->posY > height/2)
+			return true;
+	return false;
 }
 
 void MyWindow::deleteMark(Mark* mark)
 {
-	m.lock();
+	mtx.lock();
 	unsigned int i=0;
 	//Find mark in "register""
 	for(i=0; i<vector.size(); i++)
@@ -75,5 +83,5 @@ void MyWindow::deleteMark(Mark* mark)
 	}
 	//Remove it
 	vector.erase(vector.begin() + i);
-	m.unlock();
+	mtx.unlock();
 }

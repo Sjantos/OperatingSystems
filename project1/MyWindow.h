@@ -15,13 +15,14 @@ public:
     void update();
 	void clearOne(int y, int x);
 	void deleteMark(Mark* mark);
+	bool marksInHalf();
 
 private:
 	int startX, startY;
     int height, width;
     WINDOW * win;
 	std::vector<Mark*> vector;
-	mutable std::mutex m;
+	mutable std::mutex mtx;
 	std::condition_variable c;
 };
 #endif

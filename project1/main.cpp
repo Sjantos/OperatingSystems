@@ -1,24 +1,29 @@
 #include <thread>
 #include <chrono>
+#include <mutex>
+#include <condition_variable>
+#include <functional>
 #include <time.h>
 #include <cstdlib>
 #include <ncurses.h>
 #include <string>
 #include <unistd.h>
-#include <vector>
+#include <map>
 #include "MyWindow.h"
 #include "Mark.h"
 
 MyWindow* win;
 int squareSize;
-int tableSize;
+std::mutex globalMutex;
+std::condition_variable cv;
+bool exitPressed;
 
 class MyThread
 {
 public:
 	MyThread() {};
 	//Function that threads will be executing
-	void ThreadFunction(bool& b)
+	void ThreadFunction(int delay)
 	{
 		//Create new mark (bullet) from letter O with random speed
 		Mark* m = new Mark('O', (-1)*(rand()%3+1), rand()%3+1, squareSize);
@@ -28,6 +33,14 @@ public:
 		//While bounce counter less than 3, move and draw bullet
 		while(bounce < 3)
 		{
+			win->update();
+			//If ESC was pressed, do not wait
+			if(!exitPressed)
+			{
+				std::unique_lock<std::mutex> lock(globalMutex);
+				//wait if marksInHalf return true (all marks in upper half)
+				cv.wait(lock, std::bind(&MyWindow::marksInHalf, win));
+			}
 			//Clear old position
 			win->clearOne(m->posY, m->posX);
 			//Move, if true, then increase bounce
@@ -36,91 +49,52 @@ public:
 			//Update view
 			win->update();
 			//Slow down
-			std::this_thread::sleep_for (std::chrono::milliseconds(100));
+			std::this_thread::sleep_for (std::chrono::milliseconds(delay));
 		}
 		//Bounced 3 times, delete mark
 		win->deleteMark(m);
 		win->clearOne(m->posY, m->posX);
-		//Set bool in table to true - means that new thread can replace it
-		b = true;
-                delete[] m;
+        delete[] m;
 	}
 };
 
 int main(int argc,  char** argv)
 {
-	squareSize = atoi(argv[1]);
-	tableSize = atoi(argv[2]);
-	srand(time(NULL));
-    win = new MyWindow(squareSize);
-	std::thread* ThreadTable = new std::thread[tableSize];
+	//INITIALIZE
+		//Input arguments
+		squareSize = atoi(argv[1]);
+		int shootDelay = atoi(argv[2]);
+		int threadDelay = atoi(argv[3]);
+		
+		srand(time(NULL));
+		win = new MyWindow(squareSize);
+		MyThread* mt = new MyThread();
+		std::map<int, std::thread> threadMap;
+		exitPressed = false;
 	
-	//If cell contain false, thread is working, if true, thread is ready to join
-	bool* statTable = new bool[tableSize];
-	MyThread* mt = new MyThread();
-	
-	//Create starting threads
-	for(int i=0; i<tableSize; i++)
-	{
-		statTable[i] = false;
-		//ThreadTable[i] = std::thread((Fctor()), std::ref(statTable[i]), tableSize-1);
-		ThreadTable[i] = std::thread(&MyThread::ThreadFunction, mt, std::ref(statTable[i]));
-	}
-	
-	//ncurses don't block at getch, check getch every 100ms
-	timeout(100);
-	int c;
-	//While ESC not pressed, shoot
-	while((c=getch()) != 27)
-	{
-		//Look for a thread to replace
-		for(int i=0; i<tableSize; i++)
+	//MAIN PROGRAM
+		//ncurses don't block at getch, check getch every 100ms
+		timeout(100);
+		int c, counter=0;
+		//While ESC not pressed, shoot
+		while(!exitPressed)
 		{
-			if(statTable[i])
-			{
-				//Join old thread and start new one
-				ThreadTable[i].join();
-				statTable[i] = false;
-				//ThreadTable[i] = std::thread((Fctor()), std::ref(statTable[i]), tableSize-1);
-				ThreadTable[i] = std::thread(&MyThread::ThreadFunction, mt, std::ref(statTable[i]));
-			}
+			if((c=getch()) == 27)
+				exitPressed = true;
+			threadMap[counter]=std::thread(&MyThread::ThreadFunction, mt, threadDelay);
+			//New mark in bottom half, notify other threads
+			cv.notify_all();
+			std::this_thread::sleep_for (std::chrono::milliseconds(shootDelay));
+			counter++;
 		}
-	}
-
-	//Join all threads at the end of program
-	for(int i=0; i<tableSize; i++)
-	{
-		ThreadTable[i].join();
-	}
-	//Delete allocated memory
-	delete[] ThreadTable;
-        delete[] statTable;
-        delete mt;
-    delete win;
+	
+	//CLEANING
+		//Join all threads at the end of program
+		for(unsigned int i=0; i<threadMap.size(); i++)
+			threadMap[i].join();
+		
+		//Delete allocated memory
+		delete win;
 
     return 0;
 }
-
-
-//Inne podejście
-// class Fctor
-// {
-// public:
-	// void operator()(bool& b, int startY)
-	// {
-		// Mark* m = new Mark('O', (-1)*(rand()%3+1), rand()%3+1, squareSize);//(tableSize-1, 1, 'O', (-1)*(rand()%3+1), rand()%3+1, squareSize);
-		// win->addToBuffer(m);
-		// int bounce = 0;
-		// while(bounce <= 3)
-		// {
-			// win->clearOne(m->posY, m->posX);
-			// if(m->move())
-				// bounce++;
-			// win->update();
-			// std::this_thread::sleep_for (std::chrono::milliseconds(100));
-		// }
-		// win->deleteMark(m);
-		// win->clearOne(m->posY, m->posX);
-		// b = true;
-	// }
-// };
