@@ -62,13 +62,19 @@ void MyWindow::update()
 	mtx.unlock();
 }
 
-bool MyWindow::marksInHalf()
+int MyWindow::numberOfMarks()
+{
+	return vector.size();
+}
+
+int MyWindow::marksInHalf()
 {
 	//Check if all marks are in upper half of box
+	int count = 0;
 	for(auto &mark : vector)
-		if(mark->posY > height/2)
-			return true;
-	return false;
+		if(mark->posY < height/2)
+			count++;
+	return count;
 }
 
 void MyWindow::deleteMark(Mark* mark)

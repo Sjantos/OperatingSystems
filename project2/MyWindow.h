@@ -15,7 +15,8 @@ public:
     void update();
 	void clearOne(int y, int x);
 	void deleteMark(Mark* mark);
-	bool marksInHalf();
+	int marksInHalf();
+	int numberOfMarks();
 
 private:
 	int startX, startY;

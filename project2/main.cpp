@@ -18,6 +18,11 @@ std::mutex globalMutex;
 std::condition_variable cv;
 bool exitPressed;
 
+bool markInBottomHalf()
+{
+	return win->numberOfMarks() != win->marksInHalf();
+}
+
 class MyThread
 {
 public:
@@ -39,7 +44,9 @@ public:
 			{
 				std::unique_lock<std::mutex> lock(globalMutex);
 				//wait if marksInHalf return true (all marks in upper half)
-				cv.wait(lock, std::bind(&MyWindow::marksInHalf, win));
+				//cv.wait(lock, std::bind(&MyWindow::marksInHalf, win));
+				cv.wait(lock, markInBottomHalf);
+				cv.notify_all();
 			}
 			//Clear old position
 			win->clearOne(m->posY, m->posX);

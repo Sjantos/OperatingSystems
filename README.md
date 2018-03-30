@@ -13,4 +13,4 @@ To run project, open terminal in project1 directory, type **make**, then **./pro
 Modify Project 1 to stop all the bullets(threads), when they are in upper half of the box. Activate them, when a bullet show in bottom half (when new is created and shooted).
 Additionally, projects needed rework, because bullets should be spawned by time interval, and in first project there was constant number of bullets, so all of them could get stuck in upper half.
 
-To run project, open terminal in project2 directory, type **make**, then **./project2 arg1 arg2 arg3** where arg1 is box (square) height (I suggest 32 for this value), arg2 is interval between new bullets (in milliseconds) and arg3 is threads delay in moving bullets (in milliseconds).
+To run project, open terminal in project2 directory, type **make**, then **./project2 arg1 arg2 arg3** where arg1 is box (square) height (I suggest 32 for this value), arg2 is interval between new bullets (in milliseconds) and arg3 is threads delay in moving bullets (in milliseconds). (suggested call: ./project2 32 2000 100)
