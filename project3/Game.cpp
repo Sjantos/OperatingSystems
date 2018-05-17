@@ -2,7 +2,7 @@
 #include <chrono>
 #include <thread>
 
-Game::Game(int height, int width, int playerHeight) : exitMutex(), playerLeftMutex(), playerRightMutex(), gameMain(), input(), playerLeft(), playerRight()/*
+Game::Game(int height, int width, int playerHeight) : winMutex(), exitMutex(), playerLeftMutex(), playerRightMutex(), gameMain(), input(), playerLeft(), playerRight()/*
 			: 	win(height, width),
 				playerRight((height / 2) - (playerHeight / 2), width - 1, height),
 				playerLeft((height / 2) - (playerHeight / 2), 1, height)*/
@@ -34,25 +34,30 @@ Game::~Game()
 std::thread Game::FireInputThread()
 {
 	return std::thread([=] { CheckForInput(); });
-	//gameMain = std::thread(&Game::GameLoop, this);
-	//input = std::thread(&Game::CheckForInput, this);
-	//playerLeftThread = std::thread(&Game::PlayerLeftMove, this);
-	//playerRightThread = std::thread(&Game::PlayerRightMove, this);
 }
-
 std::thread Game::FireGameLoopThread()
 {
 	return std::thread([=] { GameLoop(); });
 }
+std::thread Game::FirePlayerLeftThread()
+{
+	return std::thread([=] { PlayerLeftMove(); });
+}
+std::thread Game::FirePlayerRightThread()
+{
+	return std::thread([=] { PlayerRightMove(); });
+}
 
 void Game::CheckForInput()
 {
-		timeout(10);
-		char c = getch();
+	//timeout(10);
+	//char c = getch();
+	inputMutex.lock();
+	while(inputValue != 27)
+	{
 		playerLeftMutex.lock();
 		playerRightMutex.lock();
-		exitMutex.lock();
-		switch(c)
+		switch(inputValue)
 		{
 			case 'a':
 				playerLeftSpeed = -1;
@@ -66,72 +71,86 @@ void Game::CheckForInput()
 			case 'm':
 				playerRightSpeed = 1;
 			break;
-			case 27:
-				exitPressed = true;
-			break;
+			//case 27:
+			//	exitPressed = true;
+			//break;
 		}
 		playerLeftMutex.unlock();
 		playerRightMutex.unlock();
-		exitMutex.unlock();
+		inputMutex.unlock();
+		std::this_thread::sleep_for (std::chrono::milliseconds(10));
+	}
+	
+	inputMutex.unlock();
 }
 
 void Game::GameLoop()
 {
-	while(!exitPressed)
-	{
-		playerLeftMutex.lock();
-		playerRightMutex.lock();
-	
-		CheckForInput();
-		PlayerLeftMove();
-		PlayerRightMove();
+	//CheckForInput();
+	//PlayerLeftMove();
+	//PlayerRightMove();
 
-		playerLeftMutex.lock();
+	winMutex.lock();
 		win->drawPlayer(playerLeft);// playerLeft->DrawPlayer(win);
-		playerLeftMutex.unlock();
-		playerRightMutex.lock();
 		win->drawPlayer(playerRight);//playerRight->DrawPlayer(win);
-		playerRightMutex.unlock();
 		win->set(counter, counter, 'O');
 		win->update();
-		counter++;
-	
-		playerLeftMutex.unlock();
-		playerRightMutex.unlock();
-	}
-	
+	winMutex.unlock();
+	counter++;
 }
 
 void Game::PlayerLeftMove()
 {
+	inputMutex.lock();
+	while(inputValue != 27)
+	{
 		playerLeftMutex.lock();
 		if(playerLeftSpeed < 0 && playerLeft->posY > 0)
 		{
+			winMutex.lock();
 			win->set(playerLeft->posY+playerLeft->height - 1, playerLeft->posX, ' ');
+			winMutex.unlock();
 			playerLeft->posY--;
 		} else if(playerLeftSpeed > 0 && (playerLeft->posY + playerLeft->height) < boardHeight)
 		{
+			winMutex.lock();
 			win->set(playerLeft->posY, playerLeft->posX, ' ');
+			winMutex.unlock();
 			playerLeft->posY++;
 		}
-		playerLeftSpeed = 0;
+		//playerLeftSpeed = 0;
 		playerLeftMutex.unlock();
+		inputMutex.unlock();
+		std::this_thread::sleep_for (std::chrono::milliseconds(250));
+	}
+	inputMutex.unlock();
 }
 
 void Game::PlayerRightMove()
 {
+	inputMutex.lock();
+	while(inputValue != 27)
+	{
 		playerRightMutex.lock();
 		if(playerRightSpeed < 0 && playerRight->posY > 0)
 		{
+			winMutex.lock();
 			win->set(playerRight->posY+playerRight->height - 1, playerRight->posX, ' ');
+			winMutex.unlock();
 			playerRight->posY--;
 		} else if(playerRightSpeed > 0 && (playerRight->posY + playerRight->height) < boardHeight)
 		{
+			winMutex.lock();
 			win->set(playerRight->posY, playerRight->posX, ' ');
+			winMutex.unlock();
 			playerRight->posY++;
 		}
-		playerRightSpeed = 0;
+		//playerRightSpeed = 0;
 		playerRightMutex.unlock();
+		inputMutex.unlock();
+		std::this_thread::sleep_for (std::chrono::milliseconds(250));
+	}
+	inputMutex.unlock();
 }
 
 bool Game::ExitPressed()

@@ -18,6 +18,7 @@ int squareSize;
 std::mutex globalMutex;
 std::condition_variable cv;
 bool exitPressed;
+char c = 0;
 
 
 int main(int argc,  char** argv)
@@ -44,22 +45,31 @@ int main(int argc,  char** argv)
 	
 	//g->FireThreads();
 	//std::thread inputThread(&Game::CheckForInput, g);
-	g->GameLoop();
+	//g->GameLoop();
 	std::thread input = g->FireInputThread();
-	std::thread gameLoop = g-> FireGameLoopThread();
+	std::thread playerLeft = g->FirePlayerLeftThread();
+	std::thread playerRight = g->FirePlayerRightThread();
+	//std::thread gameLoop = g-> FireGameLoopThread();
 	
 	//char c = 0;
-	//timeout(10);
-	while(g->ExitPressed())//g->ExitPressed())
+	timeout(10);
+	bool whileCondition = true;
+	while(whileCondition)//g->ExitPressed())
 	{
+		g->inputMutex.lock();
+		g->inputValue = getch();
+		whileCondition = g->inputValue == 27 ? false : true;
+		g->inputMutex.unlock();
 		std::this_thread::sleep_for (std::chrono::milliseconds(10));
 		//g->CheckForInput();
-		//g->GameLoop();
+		g->GameLoop();
 		//win->update();
 	}
 	
+	playerLeft.join();
+	playerRight.join();
 	input.join();
-	gameLoop.join();
+	//gameLoop.join();
 	delete g;
 }
 
