@@ -40,20 +40,27 @@ int main(int argc,  char** argv)
 		break;
 	}
 	
-	Game g(height, width, playerHeight);// = new Game(height, width, playerHeight);
+	Game* g = new Game(height, width, playerHeight);
 	
-	g.FireThreads();
+	//g->FireThreads();
+	//std::thread inputThread(&Game::CheckForInput, g);
+	g->GameLoop();
+	std::thread input = g->FireInputThread();
+	std::thread gameLoop = g-> FireGameLoopThread();
 	
-	//g->GameLoop();
-	
-	while(!g.ExitPressed())
+	//char c = 0;
+	//timeout(10);
+	while(g->ExitPressed())//g->ExitPressed())
 	{
-		std::this_thread::sleep_for (std::chrono::milliseconds(500));
-		//g.GameLoop();
+		std::this_thread::sleep_for (std::chrono::milliseconds(10));
+		//g->CheckForInput();
+		//g->GameLoop();
 		//win->update();
 	}
 	
-	//delete g;
+	input.join();
+	gameLoop.join();
+	delete g;
 }
 
 /*

@@ -2,11 +2,12 @@
 #include <chrono>
 #include <thread>
 
-Game::Game(int height, int width, int playerHeight) : playerLeftMutex(), playerRightMutex(), gameMain(), input(), playerLeft(), playerRight()/*
+Game::Game(int height, int width, int playerHeight) : exitMutex(), playerLeftMutex(), playerRightMutex(), gameMain(), input(), playerLeft(), playerRight()/*
 			: 	win(height, width),
 				playerRight((height / 2) - (playerHeight / 2), width - 1, height),
 				playerLeft((height / 2) - (playerHeight / 2), 1, height)*/
 {
+	exitPressed = false;
 	boardHeight = height;
 	boardWidth = width;
 	win = new MyWindow(height, width);
@@ -17,33 +18,40 @@ Game::Game(int height, int width, int playerHeight) : playerLeftMutex(), playerR
 
 Game::~Game()
 {
-	if(gameMain.joinable())
-		gameMain.join();
-	if(input.joinable())
+	/*if(input.joinable())
 		input.join();
+	/*if(gameMain.joinable())
+		gameMain.join();
 	if(playerLeftThread.joinable())
 		playerLeftThread.join();
 	if(playerRightThread.joinable())
-		playerRightThread.join();
+		playerRightThread.join();*/
 	delete win;
-	delete playerRight;
-	delete playerLeft;
+	//delete playerRight;
+	//delete playerLeft;
 }
 
-void Game::FireThreads()
+std::thread Game::FireInputThread()
 {
-	gameMain = std::thread(&Game::GameLoop, this);
-	input = std::thread(&Game::CheckForInput, this);
-	playerLeftThread = std::thread(&Game::PlayerLeftMove, this);
-	playerRightThread = std::thread(&Game::PlayerRightMove, this);
+	return std::thread([=] { CheckForInput(); });
+	//gameMain = std::thread(&Game::GameLoop, this);
+	//input = std::thread(&Game::CheckForInput, this);
+	//playerLeftThread = std::thread(&Game::PlayerLeftMove, this);
+	//playerRightThread = std::thread(&Game::PlayerRightMove, this);
+}
+
+std::thread Game::FireGameLoopThread()
+{
+	return std::thread([=] { GameLoop(); });
 }
 
 void Game::CheckForInput()
 {
-	while(!exitPressed)
-	{
 		timeout(10);
 		char c = getch();
+		playerLeftMutex.lock();
+		playerRightMutex.lock();
+		exitMutex.lock();
 		switch(c)
 		{
 			case 'a':
@@ -62,17 +70,22 @@ void Game::CheckForInput()
 				exitPressed = true;
 			break;
 		}
-	}
-	
+		playerLeftMutex.unlock();
+		playerRightMutex.unlock();
+		exitMutex.unlock();
 }
 
 void Game::GameLoop()
 {
-	//CheckForInput();
-	//PlayerLeftMove();
-	//PlayerRightMove();
 	while(!exitPressed)
 	{
+		playerLeftMutex.lock();
+		playerRightMutex.lock();
+	
+		CheckForInput();
+		PlayerLeftMove();
+		PlayerRightMove();
+
 		playerLeftMutex.lock();
 		win->drawPlayer(playerLeft);// playerLeft->DrawPlayer(win);
 		playerLeftMutex.unlock();
@@ -82,14 +95,15 @@ void Game::GameLoop()
 		win->set(counter, counter, 'O');
 		win->update();
 		counter++;
+	
+		playerLeftMutex.unlock();
+		playerRightMutex.unlock();
 	}
 	
 }
 
 void Game::PlayerLeftMove()
 {
-	while(!exitPressed)
-	{
 		playerLeftMutex.lock();
 		if(playerLeftSpeed < 0 && playerLeft->posY > 0)
 		{
@@ -102,14 +116,10 @@ void Game::PlayerLeftMove()
 		}
 		playerLeftSpeed = 0;
 		playerLeftMutex.unlock();
-	}
-	
 }
 
 void Game::PlayerRightMove()
 {
-	while(!exitPressed)
-	{
 		playerRightMutex.lock();
 		if(playerRightSpeed < 0 && playerRight->posY > 0)
 		{
@@ -122,6 +132,9 @@ void Game::PlayerRightMove()
 		}
 		playerRightSpeed = 0;
 		playerRightMutex.unlock();
-	}
-	
+}
+
+bool Game::ExitPressed()
+{
+	return exitPressed;
 }

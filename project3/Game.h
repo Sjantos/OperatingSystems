@@ -26,16 +26,18 @@ class Game
 	
 	std::mutex playerLeftMutex;
 	std::mutex playerRightMutex;
+	std::mutex exitMutex;
 	
 public:
 	Game(int height, int width, int playerHeight);
 	~Game();
-	void FireThreads();
+	std::thread FireInputThread();
+	std::thread FireGameLoopThread();
 	void CheckForInput();
 	void GameLoop();
 	void PlayerLeftMove();
 	void PlayerRightMove();
-	bool ExitPressed() { return exitPressed; }
+	bool ExitPressed();
 };
 
 #endif
