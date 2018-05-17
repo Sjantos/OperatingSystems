@@ -2,33 +2,22 @@
 #include <chrono>
 #include <thread>
 
-Game::Game(int height, int width, int playerHeight) : winMutex(), exitMutex(), playerLeftMutex(), playerRightMutex(), gameMain(), input(), playerLeft(), playerRight()/*
-			: 	win(height, width),
-				playerRight((height / 2) - (playerHeight / 2), width - 1, height),
-				playerLeft((height / 2) - (playerHeight / 2), 1, height)*/
+Game::Game(int height, int width, int playerHeight, int playersRefreshInterval) : playerLeft(), playerRight()
 {
-	exitPressed = false;
 	boardHeight = height;
 	boardWidth = width;
 	win = new MyWindow(height, width);
 	int y = (height / 2) - (playerHeight / 2);
 	playerRight = new Player(y, width - 2, playerHeight);
 	playerLeft = new Player(y, 1, playerHeight);
+	playersThreadSleepTime = playersRefreshInterval;
 }
 
 Game::~Game()
 {
-	/*if(input.joinable())
-		input.join();
-	/*if(gameMain.joinable())
-		gameMain.join();
-	if(playerLeftThread.joinable())
-		playerLeftThread.join();
-	if(playerRightThread.joinable())
-		playerRightThread.join();*/
 	delete win;
-	//delete playerRight;
-	//delete playerLeft;
+	delete playerLeft;
+	delete playerRight;
 }
 
 std::thread Game::FireInputThread()
@@ -50,8 +39,6 @@ std::thread Game::FirePlayerRightThread()
 
 void Game::CheckForInput()
 {
-	//timeout(10);
-	//char c = getch();
 	inputMutex.lock();
 	while(inputValue != 27)
 	{
@@ -71,9 +58,6 @@ void Game::CheckForInput()
 			case 'm':
 				playerRightSpeed = 1;
 			break;
-			//case 27:
-			//	exitPressed = true;
-			//break;
 		}
 		playerLeftMutex.unlock();
 		playerRightMutex.unlock();
@@ -86,13 +70,9 @@ void Game::CheckForInput()
 
 void Game::GameLoop()
 {
-	//CheckForInput();
-	//PlayerLeftMove();
-	//PlayerRightMove();
-
 	winMutex.lock();
-		win->drawPlayer(playerLeft);// playerLeft->DrawPlayer(win);
-		win->drawPlayer(playerRight);//playerRight->DrawPlayer(win);
+		win->drawPlayer(playerLeft);
+		win->drawPlayer(playerRight);
 		win->set(counter, counter, 'O');
 		win->update();
 	winMutex.unlock();
@@ -118,7 +98,6 @@ void Game::PlayerLeftMove()
 			winMutex.unlock();
 			playerLeft->posY++;
 		}
-		//playerLeftSpeed = 0;
 		playerLeftMutex.unlock();
 		inputMutex.unlock();
 		std::this_thread::sleep_for (std::chrono::milliseconds(250));
@@ -145,15 +124,9 @@ void Game::PlayerRightMove()
 			winMutex.unlock();
 			playerRight->posY++;
 		}
-		//playerRightSpeed = 0;
 		playerRightMutex.unlock();
 		inputMutex.unlock();
 		std::this_thread::sleep_for (std::chrono::milliseconds(250));
 	}
 	inputMutex.unlock();
-}
-
-bool Game::ExitPressed()
-{
-	return exitPressed;
 }

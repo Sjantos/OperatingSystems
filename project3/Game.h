@@ -15,32 +15,26 @@ class Game
 	int counter;
 	int boardHeight, boardWidth;
 	
-	bool exitPressed = false;
 	int playerLeftSpeed = 0;
 	int playerRightSpeed = 0;
-	
-	std::thread gameMain;
-	std::thread input;
-	std::thread playerLeftThread;
-	std::thread playerRightThread;
+	int playersThreadSleepTime=250;
 	
 	std::mutex playerLeftMutex;
 	std::mutex playerRightMutex;
-	std::mutex exitMutex;
 	std::mutex winMutex;
 	
+	void CheckForInput();
+	void PlayerLeftMove();
+	void PlayerRightMove();
 public:
-	Game(int height, int width, int playerHeight);
+	Game(int height, int width, int playerHeight, int playersRefreshInterval);
 	~Game();
 	std::thread FireInputThread();
 	std::thread FireGameLoopThread();
 	std::thread FirePlayerLeftThread();
 	std::thread FirePlayerRightThread();
-	void CheckForInput();
+	//GameLoop is used in "main" thread
 	void GameLoop();
-	void PlayerLeftMove();
-	void PlayerRightMove();
-	bool ExitPressed();
 	
 	std::mutex inputMutex;
 	char inputValue = 0;
