@@ -73,10 +73,8 @@ void Game::GameLoop()
 	winMutex.lock();
 		win->drawPlayer(playerLeft);
 		win->drawPlayer(playerRight);
-		win->set(counter, counter, 'O');
 		win->update();
 	winMutex.unlock();
-	counter++;
 }
 
 void Game::PlayerLeftMove()
@@ -100,7 +98,7 @@ void Game::PlayerLeftMove()
 		}
 		playerLeftMutex.unlock();
 		inputMutex.unlock();
-		std::this_thread::sleep_for (std::chrono::milliseconds(250));
+		std::this_thread::sleep_for (std::chrono::milliseconds(playersThreadSleepTime));
 	}
 	inputMutex.unlock();
 }
@@ -126,7 +124,7 @@ void Game::PlayerRightMove()
 		}
 		playerRightMutex.unlock();
 		inputMutex.unlock();
-		std::this_thread::sleep_for (std::chrono::milliseconds(250));
+		std::this_thread::sleep_for (std::chrono::milliseconds(playersThreadSleepTime));
 	}
 	inputMutex.unlock();
 }

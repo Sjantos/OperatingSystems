@@ -12,7 +12,6 @@ class Game
 	MyWindow* win;
 	Player* playerLeft;
 	Player* playerRight;
-	int counter;
 	int boardHeight, boardWidth;
 	
 	int playerLeftSpeed = 0;

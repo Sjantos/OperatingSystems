@@ -39,7 +39,7 @@ int main(int argc,  char** argv)
 		break;
 	}
 	
-	Game* g = new Game(height, width, playerHeight);
+	Game* g = new Game(height, width, playerHeight, playersSleepTime);
 
 	std::thread input = g->FireInputThread();
 	std::thread playerLeft = g->FirePlayerLeftThread();
