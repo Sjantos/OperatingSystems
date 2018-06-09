@@ -12,30 +12,31 @@ class Game
 	MyWindow* win;
 	Player* playerLeft;
 	Player* playerRight;
-	int counter;
 	int boardHeight, boardWidth;
 	
-	bool exitPressed = false;
 	int playerLeftSpeed = 0;
 	int playerRightSpeed = 0;
-	
-	std::thread gameMain;
-	std::thread input;
-	std::thread playerLeftThread;
-	std::thread playerRightThread;
+	int playersThreadSleepTime=250;
 	
 	std::mutex playerLeftMutex;
 	std::mutex playerRightMutex;
+	std::mutex winMutex;
 	
-public:
-	Game(int height, int width, int playerHeight);
-	~Game();
-	void FireThreads();
 	void CheckForInput();
-	void GameLoop();
 	void PlayerLeftMove();
 	void PlayerRightMove();
-	bool ExitPressed() { return exitPressed; }
+public:
+	Game(int height, int width, int playerHeight, int playersRefreshInterval);
+	~Game();
+	std::thread FireInputThread();
+	std::thread FireGameLoopThread();
+	std::thread FirePlayerLeftThread();
+	std::thread FirePlayerRightThread();
+	//GameLoop is used in "main" thread
+	void GameLoop();
+	
+	std::mutex inputMutex;
+	char inputValue = 0;
 };
 
 #endif

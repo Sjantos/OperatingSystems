@@ -39,7 +39,6 @@ void MyWindow::addText(Text* t)
 {
 	//Lock for one-thread-at-moment use
 	mtx.lock();
-	//std::lock_guard<std::mutex> lock(this->mtx);
 	vector.push_back(t);
 	mtx.unlock();
 }
@@ -65,9 +64,7 @@ void MyWindow::update()
 {
 	//Take control
 	mtx.lock();
-	//Draw all marks from "register"
-	//for (auto &mark : vector)
-	//	mvwaddch(win, mark->posY, mark->posX, mark->mark);
+	//This can print some text on screen is there are some Text objects in vector
 	for (auto &text : vector)
 		mvprintw(text->posY, text->posX, text->txt.c_str());
 	wrefresh(win);
@@ -93,23 +90,6 @@ int MyWindow::marksInHalf()
 			count++;
 	return count;
 }
-
-/*
-void MyWindow::deleteMark(Mark* mark)
-{
-	mtx.lock();
-	unsigned int i=0;
-	//Find mark in "register""
-	for(i=0; i<vector.size(); i++)
-	{
-		if(vector[i] == mark)
-			break;
-	}
-	//Remove it
-	vector.erase(vector.begin() + i);
-	mtx.unlock();
-}
-*/
 
 void MyWindow::writeText(std::string text, int posY, int posX)
 {
