@@ -60,13 +60,16 @@ void MyWindow::set(int y, int x, char c)
 	mtx.unlock();
 }
 
-void MyWindow::update()
+void MyWindow::update(bool menu)
 {
 	//Take control
 	mtx.lock();
-	//This can print some text on screen is there are some Text objects in vector
-	for (auto &text : vector)
-		mvprintw(text->posY, text->posX, text->txt.c_str());
+	if(menu)
+	{
+		//This can print some text on screen is there are some Text objects in vector
+		for (auto &text : vector)
+			mvprintw(text->posY, text->posX, text->txt.c_str());
+	}
 	wrefresh(win);
 	//Draw description under box
 	mvprintw(height+1, 3, "To end, press ESC and wait for all threads to join");

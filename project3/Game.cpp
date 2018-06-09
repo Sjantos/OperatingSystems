@@ -70,11 +70,24 @@ void Game::CheckForInput()
 
 void Game::GameLoop()
 {
-	winMutex.lock();
-		win->drawPlayer(playerLeft);
-		win->drawPlayer(playerRight);
-		win->update();
-	winMutex.unlock();
+	inputMutex.lock();
+	bool paused = gamePaused;
+	inputMutex.unlock();
+	if(paused)
+	{
+		winMutex.lock();
+			//win->showMenu();
+			win->update(true);
+		winMutex.unlock();
+	}
+	else
+	{
+		winMutex.lock();
+			win->drawPlayer(playerLeft);
+			win->drawPlayer(playerRight);
+			win->update(false);
+		winMutex.unlock();
+	}
 }
 
 void Game::PlayerLeftMove()

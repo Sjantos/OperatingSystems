@@ -51,7 +51,13 @@ int main(int argc,  char** argv)
 	{
 		g->inputMutex.lock();
 		g->inputValue = getch();
-		whileCondition = g->inputValue == 27 ? false : true;
+		if(g->gamePaused)
+		{
+			g->gamePaused = g->inputValue == 27 ? false : true;
+			whileCondition = g->inputValue == 'y' ? false : true;
+		}
+		else
+			g->gamePaused = g->inputValue == 27 ? true : false;
 		g->inputMutex.unlock();
 		std::this_thread::sleep_for (std::chrono::milliseconds(10));
 		g->GameLoop();

@@ -15,7 +15,7 @@ public:
     MyWindow(int h, int w);
     ~MyWindow();
     void addText(Text* m);
-    void update();
+    void update(bool menu);
 	char get(int y, int x);
 	void set(int y, int x, char c);
 	void deleteMark(Mark* mark);

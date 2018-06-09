@@ -37,6 +37,7 @@ public:
 	
 	std::mutex inputMutex;
 	char inputValue = 0;
+	bool gamePaused = true;
 };
 
 #endif
